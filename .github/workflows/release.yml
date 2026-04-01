@@ -1,0 +1,60 @@
+name: Release ERPanel
+
+on:
+  push:
+    tags:
+      - 'v*' # Trigger the release automation when pushing a version tag (e.g., v1.0.0)
+  workflow_dispatch: # Allow running the workflow manually from the GitHub UI
+
+permissions:
+  contents: write # Important: Required to create a release and upload assets
+
+jobs:
+  release:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: 'macos-latest' # macOS x86 and arm64 (Apple Silicon)
+            args: '--target universal-apple-darwin'
+          - platform: 'ubuntu-22.04' # Linux
+            args: ''
+          - platform: 'windows-latest' # Windows
+            args: ''
+
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: install dependencies (ubuntu only)
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Setup Rust ecosystem
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.platform == 'macos-latest' ? 'aarch64-apple-darwin,x86_64-apple-darwin' : '' }}
+
+      - name: Install dependencies
+        run: npm ci || npm install
+
+      - name: Compile Svelte check & Build Tauri App
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: app-v__VERSION__
+          releaseName: 'ERPanel v__VERSION__'
+          releaseBody: 'See the assets to download this version and install.'
+          releaseDraft: true
+          prerelease: false
+          args: ${{ matrix.args }}
