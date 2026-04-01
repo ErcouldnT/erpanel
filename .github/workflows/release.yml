@@ -9,6 +9,9 @@ on:
 permissions:
   contents: write # Important: Required to create a release and upload assets
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
 jobs:
   release:
     strategy:
