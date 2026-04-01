@@ -1,0 +1,13 @@
+@import 'tailwindcss';
+@plugin "daisyui";
+
+@theme {
+  --font-sans: 'Inter', sans-serif;
+}
+
+@layer base {
+  body {
+    background-color: var(--fallback-b1, oklch(var(--b1) / 1));
+    color: var(--fallback-bc, oklch(var(--bc) / 1));
+  }
+}
